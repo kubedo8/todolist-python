@@ -26,16 +26,16 @@ class Todo(DbObj):
         else:
             super().__init__(title, Todo)
             self.description = description
-            self.dueDate = duedate
+            self.duedate = duedate
             self.category = category
             self.priority = priority
-            self.completed = False
 
     def __str__(self):
         """String representation of todo object
         """
-        date = "due to: %s/%s/%s" % (self.dueDate.day, self.dueDate.month, self.dueDate.year)
-        return self.title + " | " + self.description + " | " + date + " | from category: " + self.category.title + " | with priority: " + str(self.priority)
+        date = "due to: %s/%s/%s" % (self.duedate.day, self.duedate.month, self.duedate.year)
+        return self.title + " | " + self.description + " | " + date + " | from category: " + self.category.title + " | with priority: " + str(
+            self.priority)
 
     def __cmp__(self, other):
         """Comparison for todo

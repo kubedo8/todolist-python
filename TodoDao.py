@@ -8,8 +8,9 @@ import operator
 class TodoDao:
     def __init__(self):
         self.__todos = self.read_todos()
-        self.__sort_by_keys = ['title', 'description', 'priority', 'duedate']
-        self.__sortby = self.__sort_by_keys[0]
+        self.sort_by_keys = ['title', 'description', 'priority', 'duedate']
+        self.__sortby = self.sort_by_keys[0]
+        self.find_by_keys = ['title', 'description', 'priority']
         self.sort()
 
     def add_todo(self, title, description, duedate, category, priority):
@@ -27,7 +28,7 @@ class TodoDao:
             new_todo = Todo(title, description, duedate, category, priority)
             self.__todos.append(new_todo)
             self.sort()
-            self._save_categories()
+            self._save_todos()
         except BadInputException as e:
             raise e
 
@@ -48,11 +49,23 @@ class TodoDao:
             if index >= 0:
                 self.__todos[index] = new_todo
                 self.sort()
-                self._save_categories()
+                self._save_todos()
             else:
                 raise ObjectNotFoundException('Todo with id {} not found'.format(todo.id))
         except BadInputException as e:
             raise e
+
+    def remove_todo(self, id):
+        """Deletes selected todo
+
+        Args:
+            id(int): Id to delete
+
+        """
+        index = self.find_todo(id)
+        if index >= 0:
+            del self.__todos[index]
+            self._save_todos()
 
     def set_sort(self, new_sort):
         """Sets new sort
@@ -61,11 +74,12 @@ class TodoDao:
             new_sort(str): New sort attribute
 
         """
-        index = self.__sort_by_keys.index(new_sort)
+        index = self._sort_index(new_sort)
         if index == -1:
             raise BadInputException('Sorting method {} does not exists'.format(new_sort))
         else:
-            self.__sortby = self.__sort_by_keys[index]
+            self.__sortby = self.sort_by_keys[index]
+            self.sort()
 
     def sort(self):
         """Sort todos
@@ -84,6 +98,9 @@ class TodoDao:
         """
         return [x for x in self.__todos if x.category.title == category.title]
 
+    def get_all(self):
+        return self.__todos
+
     def find_todo(self, id):
         """Finds todo index
 
@@ -100,6 +117,29 @@ class TodoDao:
         else:
             return -1
 
+    def find_todos(self, category, attr, value):
+        """Finds todos with specific attribute and value
+
+        Args:
+            category(Category): Todo category
+            attr(str): Todo attribute
+            value(str): Value of attribute
+
+        Returns:
+            List of accepted todos
+
+        """
+        if not self._is_valid_find_key(attr):
+            raise BadInputException('Find by {} does not exists'.format(attr))
+        if attr == 'priority':
+            if value.isdigit():
+                return [x for x in self.get_todos(category) if x.priority == int(value)]
+            else:
+                return list()
+        else:
+            call = operator.attrgetter(attr)
+            return [x for x in self.get_todos(category) if value in call(x)]
+
     def read_todos(self):
         """Reads todos from disk
         """
@@ -114,7 +154,7 @@ class TodoDao:
         finally:
             return todos
 
-    def _save_categories(self):
+    def _save_todos(self):
         """Saves todos to disk
         """
         try:
@@ -122,3 +162,19 @@ class TodoDao:
                 pickle.dump(self.__todos, f)
         except Exception:
             raise StoringException('Failed to store todos')
+
+    def _sort_index(self, key):
+        """Finds sort index
+        """
+        for index, item in enumerate(self.sort_by_keys):
+            if key == item:
+                return index
+        return -1
+
+    def _is_valid_find_key(self, key):
+        """Check if given key for finding is valid
+        """
+        for item in self.find_by_keys:
+            if key == item:
+                return True
+        return False
