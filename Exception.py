@@ -40,3 +40,13 @@ class DuplicateObjectException(Exception):
 
     def __str__(self):
         return self.message
+
+class ObjectNotFoundException(Exception):
+    """
+    Exception raised when storing file
+    """
+    def __init__(self, message):
+        self.message = message
+
+    def __str__(self):
+        return self.message
