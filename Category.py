@@ -1,4 +1,4 @@
-import DbObj
+from DbObj import DbObj
 
 
 class Category(DbObj):

@@ -14,7 +14,7 @@ class DbObj:
         if title is None or not isinstance(title, str):
             raise BadInputException("Title is in bad format!")
         else:
-            self.id = self.generateid()
+            self.id = self._generateid()
             self.title = title
             self.type = type
             self.createdAt = datetime.datetime.now()
@@ -34,7 +34,7 @@ class DbObj:
         """
         return "{} with id: {}".format(self.type, self.id)
 
-    def generateid(self):
+    def _generateid(self):
         """Generates unique id for database object
 
         Returns:
