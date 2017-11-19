@@ -34,25 +34,29 @@ class Design:
         Button(self.category_frame, text='Delete', command=lambda: self.on_delete_category()).grid(row=1, column=2,
                                                                                                    columnspan=1)
 
-        Label(self.todo_frame, text="Todo's").grid(row=0, column=3, columnspan=9)
+        Label(self.todo_frame, text="Todo's").grid(row=0, column=3, columnspan=6)
+        Button(self.todo_frame, text='Import', command=lambda: self.on_import()).grid(row=0, column=9, columnspan=1)
+        Button(self.todo_frame, text='Export', command=lambda: self.on_export()).grid(row=0, column=10, columnspan=1)
         Button(self.todo_frame, text='Add', command=lambda: self.on_add_todo()).grid(row=1, column=3, columnspan=1)
-        Button(self.todo_frame, text='Update', command=lambda: self.on_update_todo()).grid(row=1, column=4, columnspan=1)
-        Button(self.todo_frame, text='Complete', command=lambda: self.on_complete_todo()).grid(row=1, column=5, columnspan=1)
+        Button(self.todo_frame, text='Update', command=lambda: self.on_update_todo()).grid(row=1, column=4,
+                                                                                           columnspan=1)
+        Button(self.todo_frame, text='Complete', command=lambda: self.on_complete_todo()).grid(row=1, column=5,
+                                                                                               columnspan=1)
 
         Label(self.todo_frame, text='Sort by:').grid(row=1, column=6, columnspan=1)
         self.sort_by_value = StringVar()
         self.sort_combo = Combobox(self.todo_frame, textvariable=self.sort_by_value, values=self.tddao.sort_by_keys,
-                       state='readonly', width=10)
+                                   state='readonly', width=10)
         self.sort_combo.current(0)
-        self.sort_combo.bind("<<ComboboxSelected>>", self.on_sort_change)
+        self.sort_combo.bind('<<ComboboxSelected>>', self.on_sort_change)
         self.sort_combo.grid(row=1, column=7, columnspan=1)
 
         Label(self.todo_frame, text='Filter:').grid(row=1, column=8, columnspan=1)
         self.find_by_value = StringVar()
         self.filter_combo = Combobox(self.todo_frame, textvariable=self.find_by_value, values=self.tddao.find_by_keys,
-                        state='readonly', width=10)
+                                     state='readonly', width=10)
         self.filter_combo.current(0)
-        self.filter_combo.bind("<<ComboboxSelected>>", self.on_filter_attr_change)
+        self.filter_combo.bind('<<ComboboxSelected>>', self.on_filter_attr_change)
         self.filter_combo.grid(row=1, column=9, columnspan=1)
 
         self.category_list = Listbox(self.category_frame, selectmode=SINGLE)
@@ -99,7 +103,8 @@ class Design:
         if len(self.filter_entry.get()) == 0:
             self.set_todo_list(self.tddao.get_todos(self.selected_category()))
         else:
-            self.set_todo_list(self.tddao.find_todos(self.selected_category(), self.filter_combo.get(), self.filter_entry.get()))
+            self.set_todo_list(
+                self.tddao.find_todos(self.selected_category(), self.filter_combo.get(), self.filter_entry.get()))
 
     def set_todo_list(self, todos):
         for index, todo in enumerate(todos):
@@ -134,6 +139,56 @@ class Design:
 
         Button(dialog, text='OK', command=func).grid(row=1, columnspan=2, sticky=E)
         Button(dialog, text='Close', command=lambda: dialog.destroy()).grid(row=1, column=2, columnspan=3, sticky=E)
+
+    def on_import(self):
+        if len(self.category_list.curselection()) < 1:
+            messagebox.showerror('Error', 'Select category for import')
+            return
+        self.show_import_export_dialog('Import')
+
+    def on_export(self):
+        if len(self.category_list.curselection()) < 1:
+            messagebox.showerror('Error', 'Select category for export')
+            return
+        category = self.selected_category()
+        if len(self.tddao.get_todos(category)) == 0:
+            messagebox.showerror('Error', 'Nothing to export')
+            return
+        self.show_import_export_dialog('Export')
+
+    def show_import_export_dialog(self, flag):
+        dialog = Toplevel(self.tk)
+        title_entry = Entry(dialog)
+        title_entry.delete(0, END)
+        title_entry.grid(row=0, columnspan=3, sticky=E)
+        Label(dialog, text='.xml').grid(row=0, column=3, columnspan=1)
+
+        func = None
+        if flag == 'Import':
+            func = lambda: self.import_todos(dialog, title_entry.get())
+        else:
+            func = lambda: self.export_todos(dialog, title_entry.get())
+
+        Button(dialog, text='OK', command=func).grid(row=1, columnspan=2, sticky=E)
+        Button(dialog, text='Close', command=lambda: dialog.destroy()).grid(row=1, column=2, columnspan=3, sticky=E)
+
+    def import_todos(self, dialog, file_name):
+        if len(file_name) == 0:
+            messagebox.showerror('Error', 'File name can not be empty')
+            return
+        num = self.tddao.import_todos(self.selected_category(), file_name)
+        self.actualize_todo_list()
+        dialog.destroy()
+        messagebox.showinfo('Import', 'Imported {} todos'.format(num))
+
+    def export_todos(self, dialog, file_name):
+        if len(file_name) == 0:
+            messagebox.showerror('Error', 'File name can not be empty')
+            return
+
+        self.tddao.export_todos(self.selected_category(), file_name)
+        dialog.destroy()
+        messagebox.showinfo('Export', 'Successfuly exported todos')
 
     def update_category(self, dialog, category, new_name):
         try:
@@ -201,9 +256,11 @@ class Design:
             priority_spinbox.delete(0, END)
             priority_spinbox.insert(0, todo.priority)
 
-            func = lambda: self.update_todo(dialog, todo, title_entry.get(), description_entry.get(), int(priority_spinbox.get()), duedate_entry.get())
+            func = lambda: self.update_todo(dialog, todo, title_entry.get(), description_entry.get(),
+                                            int(priority_spinbox.get()), duedate_entry.get())
         else:
-            func = lambda: self.add_todo(dialog, title_entry.get(), description_entry.get(), int(priority_spinbox.get()), duedate_entry.get())
+            func = lambda: self.add_todo(dialog, title_entry.get(), description_entry.get(),
+                                         int(priority_spinbox.get()), duedate_entry.get())
         title_entry.grid(row=0, column=2, columnspan=3)
         description_entry.grid(row=1, column=2, columnspan=3)
         duedate_entry.grid(row=2, column=2, columnspan=3)
@@ -219,7 +276,7 @@ class Design:
             messagebox.showinfo('Error', "Correct format of date is d.m.yyyy")
             return
         try:
-            self.tddao.add_todo(title,description, duedate, self.selected_category(), priority)
+            self.tddao.add_todo(title, description, duedate, self.selected_category(), priority)
             self.actualize_todo_list()
             dialog.destroy()
         except Exception as e:
@@ -232,7 +289,7 @@ class Design:
             messagebox.showinfo('Error', "Correct format of date is d.m.yyyy")
             return
         try:
-            self.tddao.update_todo(todo, title,description, duedate, priority)
+            self.tddao.update_todo(todo, title, description, duedate, priority)
             self.actualize_todo_list()
             dialog.destroy()
         except Exception as e:

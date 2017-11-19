@@ -33,7 +33,7 @@ class Todo(DbObj):
     def __str__(self):
         """String representation of todo object
         """
-        date = "due to: %s/%s/%s" % (self.duedate.day, self.duedate.month, self.duedate.year)
+        date = "due to: %s.%s.%s" % (self.duedate.day, self.duedate.month, self.duedate.year)
         return self.title + " | " + self.description + " | " + date + " | with priority: " + str(self.priority)
 
     def __cmp__(self, other):

@@ -3,11 +3,13 @@ from Todo import Todo
 from Exception import ParseException, StoringException, BadInputException, ObjectNotFoundException
 import pickle
 import operator
+from datetime import datetime
+import xml.etree.ElementTree as et
 
 
 class TodoDao:
     def __init__(self):
-        self.__todos = self.read_todos()
+        self.__todos = self._read_todos()
         self.sort_by_keys = ['title', 'description', 'priority', 'duedate']
         self.__sortby = self.sort_by_keys[0]
         self.find_by_keys = ['title', 'description', 'priority']
@@ -43,7 +45,7 @@ class TodoDao:
 
         """
         try:
-            new_todo = Todo(new_title, new_description,new_duedate, todo.category, new_priority)
+            new_todo = Todo(new_title, new_description, new_duedate, todo.category, new_priority)
             new_todo.id = todo.id
             index = self.find_todo(todo.id)
             if index >= 0:
@@ -84,7 +86,7 @@ class TodoDao:
     def sort(self):
         """Sort todos
         """
-        self.__todos.sort(key = operator.attrgetter(self.__sortby))
+        self.__todos.sort(key=operator.attrgetter(self.__sortby))
 
     def get_todos(self, category):
         """
@@ -140,7 +142,71 @@ class TodoDao:
             call = operator.attrgetter(attr)
             return [x for x in self.get_todos(category) if value.lower() in call(x).lower()]
 
-    def read_todos(self):
+    def import_todos(self, category, file_name):
+        """Import todos for category from xml file
+
+        Args:
+            category(Category): Todo category
+            file_name(str): Name of the file without .xml extension
+
+        Returns:
+            number of successfuly imported todos
+        """
+        num_imported = 0
+        try:
+            tree = et.parse(file_name + '.xml')
+            root = tree.getroot()
+            if root.tag != 'Todos':
+                return
+            for togo_tag in root:
+                if togo_tag.tag != 'Todo':
+                    continue
+                try:
+                    title = None
+                    description = None
+                    duedate = None
+                    priority = None
+                    for child in togo_tag:
+                        if child.tag == 'Title':
+                            title = child.text
+                        elif child.tag == 'Description':
+                            description = child.text
+                        elif child.tag == 'Duedate':
+                            duedate = datetime.strptime(child.text, '%d.%m.%Y').date()
+                        elif child.tag == 'Priority':
+                            priority = int(child.text)
+                    self.__todos.append(Todo(title, description, duedate, category, priority))
+                    num_imported += 1
+                except Exception:
+                    pass  # we just skip bad data
+        except FileNotFoundError:
+            pass
+        finally:
+            self._save_todos()
+            return num_imported
+
+    def export_todos(self, category, file_name):
+        """Export todos from category as xml file
+
+        Args:
+            category(Category): Todo category
+            file_name(str): Name of the file without .xml extension
+        """
+        top = et.Element('Todos')
+        for todo in self.get_todos(category):
+            todo_sub = et.SubElement(top, 'Todo')
+            title = et.SubElement(todo_sub, 'Title')
+            title.text = todo.title
+            description = et.SubElement(todo_sub, 'Description')
+            description.text = todo.description
+            duedate = et.SubElement(todo_sub, 'Duedate')
+            duedate.text = "%s.%s.%s" % (todo.duedate.day, todo.duedate.month, todo.duedate.year)
+            priority = et.SubElement(todo_sub, 'Priority')
+            priority.text = str(todo.priority)
+
+        et.ElementTree(top).write(file_name + '.xml')
+
+    def _read_todos(self):
         """Reads todos from disk
         """
         todos = list()
