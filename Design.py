@@ -79,24 +79,36 @@ class Design:
         self.tk.mainloop()
 
     def on_category_select(self, event):
+        """Fires when new category is selected
+        """
         self.actualize_todo_list()
 
     def on_sort_change(self, event):
+        """Fires when sort method is changed
+        """
         self.tddao.set_sort(self.sort_combo.get())
         self.actualize_todo_list()
 
     def on_filter_attr_change(self, event):
+        """Fires when filter attribute is changed
+        """
         self.actualize_todo_list()
 
     def on_filter_change(self, event):
+        """Fires when filter text is changed
+        """
         self.actualize_todo_list()
 
     def actualize_category_list(self):
+        """Actualize categoy listbox with new categories
+        """
         self.category_list.delete(0, END)
         for index, category in enumerate(self.ctdao.get_categories()):
             self.category_list.insert(index, category)
 
     def actualize_todo_list(self):
+        """Actualize todos listbox with filtered todo's
+        """
         self.todo_list.delete(0, END)
         if len(self.category_list.curselection()) < 1:
             return
@@ -107,22 +119,44 @@ class Design:
                 self.tddao.find_todos(self.selected_category(), self.filter_combo.get(), self.filter_entry.get()))
 
     def set_todo_list(self, todos):
+        """Sets todo values to todos listbox
+
+        Params:
+            todos: list of todo's
+
+        """
         for index, todo in enumerate(todos):
             self.todo_list.insert(index, todo)
 
     def on_add_category(self):
+        """Fires when button to add category is clicked
+        """
         self.show_category_dialog(None)
 
     def on_update_category(self):
+        """Fires when button to update category is clicked
+        """
         if len(self.category_list.curselection()) < 1:
             messagebox.showerror('Error', 'Select category to update')
             return
         self.show_category_dialog(self.selected_category())
 
     def selected_category(self):
+        """Finds current selected category
+
+        Returns:
+            selected category
+
+        """
         return self.ctdao.get_categories()[self.category_list.curselection()[0]]
 
     def show_category_dialog(self, category):
+        """Shows category dialog to add or update
+
+        Params:
+            category(Categoty): selected category, or None if add is performed
+
+        """
         dialog = Toplevel(self.tk)
 
         Label(dialog, text='Title').grid(row=0, columnspan=2, sticky=E)
@@ -141,12 +175,16 @@ class Design:
         Button(dialog, text='Close', command=lambda: dialog.destroy()).grid(row=1, column=2, columnspan=3, sticky=E)
 
     def on_import(self):
+        """Fires when import button is clicked
+        """
         if len(self.category_list.curselection()) < 1:
             messagebox.showerror('Error', 'Select category for import')
             return
         self.show_import_export_dialog('Import')
 
     def on_export(self):
+        """Fires when export button is clicked
+        """
         if len(self.category_list.curselection()) < 1:
             messagebox.showerror('Error', 'Select category for export')
             return
@@ -157,6 +195,12 @@ class Design:
         self.show_import_export_dialog('Export')
 
     def show_import_export_dialog(self, flag):
+        """Shows dialog for import, export
+
+        Params:
+            flag(str): 'Import' or 'Export'
+
+        """
         dialog = Toplevel(self.tk)
         title_entry = Entry(dialog)
         title_entry.delete(0, END)
@@ -173,6 +217,12 @@ class Design:
         Button(dialog, text='Close', command=lambda: dialog.destroy()).grid(row=1, column=2, columnspan=3, sticky=E)
 
     def import_todos(self, dialog, file_name):
+        """Import todos to selected category
+
+        Params:
+            file_name(str): Name of file to be imported
+
+        """
         if len(file_name) == 0:
             messagebox.showerror('Error', 'File name can not be empty')
             return
@@ -182,6 +232,12 @@ class Design:
         messagebox.showinfo('Import', 'Imported {} todos'.format(num))
 
     def export_todos(self, dialog, file_name):
+        """Import todos for selected category
+
+        Params:
+            file_name(str): Name of file to save exported todos
+
+        """
         if len(file_name) == 0:
             messagebox.showerror('Error', 'File name can not be empty')
             return
@@ -191,6 +247,14 @@ class Design:
         messagebox.showinfo('Export', 'Successfuly exported todos')
 
     def update_category(self, dialog, category, new_name):
+        """Updates category
+
+        Params:
+            dialog: Dialog
+            category(Category): category to update
+            new_name(str): new name of category
+
+        """
         try:
             self.ctdao.update_category(category, new_name)
             self.actualize_category_list()
@@ -199,6 +263,13 @@ class Design:
             messagebox.showerror('Error', str(e))
 
     def add_category(self, dialog, new_name):
+        """Adds category
+
+        Params:
+            dialog: Dialog
+            new_name(str): new name of category
+
+        """
         try:
             self.ctdao.add_category(new_name)
             self.actualize_category_list()
@@ -207,6 +278,8 @@ class Design:
             messagebox.showerror('Error', str(e))
 
     def on_delete_category(self):
+        """Fires when button to delete category is clicked
+        """
         if len(self.category_list.curselection()) < 1:
             messagebox.showerror('Error', 'Select category to delete')
             return
@@ -215,21 +288,37 @@ class Design:
         self.actualize_category_list()
 
     def on_add_todo(self):
+        """Fires when button to add todo is clicked
+        """
         if len(self.category_list.curselection()) < 1:
             messagebox.showerror('Error', 'Select category to add todo')
             return
         self.show_todo_dialog(None)
 
     def on_update_todo(self):
+        """Fires when button to update todo is clicked
+        """
         if len(self.todo_list.curselection()) < 1:
             messagebox.showerror('Error', 'Select todo to update')
             return
         self.show_todo_dialog(self.selected_todo())
 
     def selected_todo(self):
+        """Finds current selected todo
+
+        Returns:
+            selected todo
+
+        """
         return self.tddao.get_todos(self.selected_category())[self.todo_list.curselection()[0]]
 
     def show_todo_dialog(self, todo):
+        """Shows todo dialog for add or update
+
+        Params:
+            todo(Todo): todo for update or None if add is performed
+
+        """
         dialog = Toplevel(self.tk)
 
         Label(dialog, text='Title').grid(row=0, columnspan=2, sticky=E)
@@ -270,6 +359,16 @@ class Design:
         Button(dialog, text='Close', command=lambda: dialog.destroy()).grid(row=4, column=2, columnspan=3, sticky=E)
 
     def add_todo(self, dialog, title, description, priority, duedate):
+        """Adds todo
+
+        Params:
+            dialog: Dialog
+            title(str): title of todo
+            description(str): description of todo
+            priority(int): title of todo
+            duedate(date): duedate of todo
+
+        """
         try:
             duedate = datetime.strptime(duedate, '%d.%m.%Y').date()
         except ValueError:
@@ -283,6 +382,17 @@ class Design:
             messagebox.showerror('Error', str(e))
 
     def update_todo(self, dialog, todo, title, description, priority, duedate):
+        """Updates todo
+
+        Params:
+            dialog: Dialog
+            todo(Todo: todo to update
+            title(str): title of todo
+            description(str): description of todo
+            priority(int): title of todo
+            duedate(date): duedate of todo
+
+        """
         try:
             duedate = datetime.strptime(duedate, '%d.%m.%Y').date()
         except ValueError:
@@ -296,6 +406,8 @@ class Design:
             messagebox.showerror('Error', str(e))
 
     def on_complete_todo(self):
+        """Fires when button to complete todo is clicked
+        """
         if len(self.todo_list.curselection()) < 1:
             messagebox.showerror('Error', 'Select todo to complete')
             return
