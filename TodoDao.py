@@ -138,7 +138,7 @@ class TodoDao:
                 return list()
         else:
             call = operator.attrgetter(attr)
-            return [x for x in self.get_todos(category) if value in call(x)]
+            return [x for x in self.get_todos(category) if value.lower() in call(x).lower()]
 
     def read_todos(self):
         """Reads todos from disk
